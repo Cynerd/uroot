@@ -1,10 +1,28 @@
-#ifndef _UTILS_H_
-#define _UTILS_H_
+/* uroot - User's root
+ *   utils.h Header file with various utility functions
+ *
+ * Copyright (C) 2018 Karel Kočí
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+#ifndef _UROOT_UTILS_H_
+#define _UROOT_UTILS_H_
 
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdarg.h>
 #include <alloca.h>
+#include <sys/types.h>
 
 // Compute the size needed (including \0) to format given message
 size_t printf_len(const char *msg, ...) __attribute__((format(printf, 1, 2)));
@@ -14,4 +32,10 @@ char *printf_into(char *dst, const char *msg, ...) __attribute__((format(printf,
 // uses the arguments multiple times, so beware of side effects.
 #define aprintf(...) printf_into(alloca(printf_len(__VA_ARGS__)), __VA_ARGS__)
 
-#endif /* _UTILS_H_ */
+// returns path to shell interpreter
+const char *get_shell();
+
+// call newuidmap and newgidmap for process of given pid
+int new_map_id(const char *idtp, pid_t pid, int id);
+
+#endif
