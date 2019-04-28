@@ -1,7 +1,7 @@
 /* uroot - User's root
  *   main.c Source file with main function
  *
- * Copyright (C) 2018 Karel Kočí
+ * Copyright (C) 2018-2019 Karel Kočí
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #define _GNU_SOURCE
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -25,19 +26,67 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <argp.h>
+#include <string.h>
 #include "child.h"
 #include "utils.h"
 #include "sigpipe.h"
 #include "conf.h"
 
+const char *argp_program_version = PACKAGE_STRING;
+const char *argp_program_bug_address = PACKAGE_BUGREPORT;
+static const char usage_doc[] = "[CMD [ARG..]]";
+static const char doc[] = "Tool using Linux namespaces to provide root like functionality for unprivileged users.";
+
+struct opts {
+	char **child_argv;
+	size_t child_argc;
+};
+
+static struct argp_option options[] = {
+	{"debug", 'd', NULL, 0, "Report uroot operations.", 0},
+	{NULL}
+};
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+	struct opts *opts = state->input;
+	switch (key) {
+		case 'd':
+			// TODO logging
+			break;
+		case ARGP_KEY_ARGS:
+			opts->child_argc = state->argc - state->next;
+			opts->child_argv = malloc((opts->child_argc + 1) * sizeof *opts->child_argv);
+			memcpy(opts->child_argv, state->argv + state->next, opts->child_argc *
+					sizeof *opts->child_argv);
+			opts->child_argv[opts->child_argc] = NULL;
+			break;
+		case ARGP_KEY_INIT:
+			opts->child_argv = NULL;
+			opts->child_argc = 0;
+			break;
+		default:
+			return ARGP_ERR_UNKNOWN;
+	};
+	return 0;
+}
+
+static const struct argp argp_parser = {
+	.options = options,
+	.parser = parse_opt,
+	.args_doc = usage_doc,
+	.doc = doc,
+};
+
 
 int main(int argc, char **argv) {
-	// TODO arguments parsing
+	struct opts opts;
+	argp_parse(&argp_parser, argc, argv, ARGP_IN_ORDER, 0, &opts);
 
 	struct child_args chargs = (struct child_args) {
 		.ppid = getpid(),
-		.argc = argc,
-		.argv = argv,
+		.argc = opts.child_argc,
+		.argv = opts.child_argv,
 		.sigpipe = sigpipe_new()
 	};
 

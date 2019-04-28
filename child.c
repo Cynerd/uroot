@@ -50,10 +50,7 @@ int child_main(void *_args) {
 		const char *shell = get_shell();
 		execl(shell, shell, NULL);
 	} else {
-		char *new_argv[args->argc + 1];
-		memcpy(new_argv, args->argv + 1, args->argc * sizeof *new_argv);
-		new_argv[args->argc] = NULL;
-		execvp(new_argv[0], new_argv);
+		execvp(args->argv[0], args->argv);
 		assert_perror(errno);
 	}
 	return 1;
