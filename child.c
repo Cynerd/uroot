@@ -1,7 +1,7 @@
 /* uroot - User's root
  *   child.c Source file for child with unshared resources
  *
- * Copyright (C) 2018 Karel Kočí
+ * Copyright (C) 2018-2019 Karel Kočí
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@ int child_main(void *_args) {
 		char *new_argv[args->argc + 1];
 		memcpy(new_argv, args->argv + 1, args->argc * sizeof *new_argv);
 		new_argv[args->argc] = NULL;
-		execvp(args->argv[1], new_argv);
+		execvp(new_argv[0], new_argv);
 		assert_perror(errno);
 	}
 	return 1;
