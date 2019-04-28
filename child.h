@@ -20,6 +20,7 @@
 #ifndef _UROOT_CHILD_H_
 #define _UROOT_CHILD_H_
 
+#include <stdbool.h>
 #include <sys/types.h>
 #include "sigpipe.h"
 
@@ -29,6 +30,7 @@ struct child_args {
 	int argc;
 	char **argv;
 	sigpipe_t sigpipe;
+	bool binfmt;
 };
 
 // Function used as a main for child process

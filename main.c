@@ -41,10 +41,16 @@ static const char doc[] = "Tool using Linux namespaces to provide root like func
 struct opts {
 	char **child_argv;
 	size_t child_argc;
+	bool binfmt;
+};
+
+enum option_key {
+	OPT_BINFMT = 260,
 };
 
 static struct argp_option options[] = {
 	{"debug", 'd', NULL, 0, "Report uroot operations.", 0},
+	{"binfmt", OPT_BINFMT, NULL, 0, "Preserve registered misc binary format handlers.", 0},
 	{NULL}
 };
 
@@ -53,6 +59,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 	switch (key) {
 		case 'd':
 			// TODO logging
+			break;
+		case OPT_BINFMT:
+			opts->binfmt = true;
 			break;
 		case ARGP_KEY_ARGS:
 			opts->child_argc = state->argc - state->next;
@@ -64,6 +73,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		case ARGP_KEY_INIT:
 			opts->child_argv = NULL;
 			opts->child_argc = 0;
+			opts->binfmt = false;
 			break;
 		default:
 			return ARGP_ERR_UNKNOWN;
@@ -87,7 +97,8 @@ int main(int argc, char **argv) {
 		.ppid = getpid(),
 		.argc = opts.child_argc,
 		.argv = opts.child_argv,
-		.sigpipe = sigpipe_new()
+		.sigpipe = sigpipe_new(),
+		.binfmt = opts.binfmt,
 	};
 
 	uint8_t stack[STACK_SIZE];
