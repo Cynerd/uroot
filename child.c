@@ -49,12 +49,12 @@ int child_main(void *_args) {
 		assert_perror(errno);
 	}
 
-	if (args->argc <= 1) {
-		const char *shell = get_shell();
-		execl(shell, shell, NULL);
-	} else {
+	if (args->argc > 0) {
 		execvp(args->argv[0], args->argv);
 		assert_perror(errno);
+	} else {
+		const char *shell = get_shell();
+		execl(shell, shell, NULL);
 	}
 	return 1;
 }
