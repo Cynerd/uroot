@@ -35,7 +35,12 @@ char *printf_into(char *dst, const char *msg, ...) __attribute__((format(printf,
 // returns path to shell interpreter
 const char *get_shell();
 
-// call newuidmap and newgidmap for process of given pid
-int new_map_id(const char *idtp, pid_t pid, int id);
+enum mapidtype {
+	MAP_ID_USER,
+	MAP_ID_GROUP
+};
+
+// call newuidmap or newgidmap for process of given pid
+int new_map_id(enum mapidtype type, pid_t pid, int id);
 
 #endif

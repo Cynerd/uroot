@@ -107,9 +107,9 @@ int main(int argc, char **argv) {
 			&chargs);
 
 #define FAIL(MSG) do { fputs(MSG, stderr); kill(chpid, SIGKILL); return 1; } while (false);
-	if (new_map_id("uid", chpid, getuid()))
+	if (new_map_id(MAP_ID_USER, chpid, getuid()))
 		FAIL("Mapping of uid failed!\n");
-	if (new_map_id("gid", chpid, getgid()))
+	if (new_map_id(MAP_ID_GROUP, chpid, getgid()))
 		FAIL("Mapping of gid failed!\n");
 
 	sigpipe_signal(chargs.sigpipe);

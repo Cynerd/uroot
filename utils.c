@@ -24,6 +24,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
+#include <pwd.h>
+#include <grp.h>
 #include "utils.h"
 #include "conf.h"
 
@@ -53,15 +56,57 @@ const char *get_shell() {
 	return ret;
 }
 
-int new_map_id(const char *idtp, pid_t pid, int id) {
-	// TODO check /etc/sub* for current user subids and map them
+struct subid {
+	char *start;
+	char *count;
+};
+
+struct subid parse_sub(const char *idtp, const char *name) {
+	FILE *f = fopen(aprintf("/etc/sub%s", idtp), "r");
+	struct subid res = {NULL, NULL};
+	char *line = NULL;
+	ssize_t len = 0;
+	while ((len = getline(&line, &len, f)) != -1) {
+		char *firstcol = strchr(line, ':');
+		if (firstcol == NULL || strncmp(name, line, firstcol - line))
+			continue;
+		char *seccol = strchr(firstcol + 1, ':');
+		if (seccol == NULL)
+			continue;
+		res.start = strndup(firstcol + 1, (seccol - firstcol) - 1);
+		res.count = strndup(seccol + 1, len - 1 - (seccol - line) - (line[len - 1] == '\n' ? 1 : 0));
+	}
+	free(line);
+	fclose(f);
+	return res;
+}
+
+int new_map_id(enum mapidtype type, pid_t pid, int id) {
+	// TODO possibly we should use all maps provided by sub* files for given
+	// account. It is common that there is only one mapping but there can
+	// technically be multiple ones.
+	char const *idtp;
+	struct subid subid;
+	switch (type) {
+		case MAP_ID_USER:
+			idtp = "uid";
+			struct passwd *upass = getpwuid(getuid());
+			subid = parse_sub(idtp, upass->pw_name);
+			break;
+		case MAP_ID_GROUP:
+			idtp = "gid";
+			struct group *gpass = getgrgid(getgid());
+			subid = parse_sub(idtp, gpass->gr_name);
+			break;
+	}
 	pid_t chld = fork();
 	if (!chld) {
 		char *tool = aprintf("new%smap", idtp);
 		char *const args[] = {
-			tool, aprintf("%d", pid),
+			tool,
+			aprintf("%d", pid),
 			"0", aprintf("%d", id), "1",
-			"1", "65537", "65536",
+			subid.start && subid.count ? "1" : NULL, subid.start, subid.count,
 			NULL
 		};
 		execvp(tool, args);
